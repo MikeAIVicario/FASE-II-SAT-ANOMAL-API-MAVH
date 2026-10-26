@@ -44,12 +44,13 @@ def health_check():
 @app.post("/api/v1/detect-anomaly", response_model=AnomalyResponse)
 def detect_anomaly(data: TelemetryData):
     if model is None:
-        raise HTTPException(status_code=500, detail="Modelo no cargado en el servidor")
+        raise HTTPException(status_code=500, detail="Modelo no cargado. Verifica el archivo .joblib")
         
+    # Construcción con los nombres exactos esperados por el modelo
     input_df = pd.DataFrame([{
-        "Volumen": data.volumen_bbl,
-        "Presion": data.presion_psi,
-        "Temperatura": data.temperatura_c,
+        "volumen_bbl": data.volumen_bbl,
+        "presion_psi": data.presion_psi,
+        "temperatura_c": data.temperatura_c,
         "delta_balance_pct": data.delta_balance_pct
     }])
     
@@ -60,7 +61,7 @@ def detect_anomaly(data: TelemetryData):
     compliance = "NO CONFORME - Requiere auditoría inmediata Anexo 30/31" if is_anomaly else "CONFORME - Anexo 30/31 SAT"
     
     return AnomalyResponse(
-        id_medidor.id_medidor,
+        id_medidor=data.id_medidor,
         es_anomalia=is_anomaly,
         probabilidad_anomalia=round(prob, 4),
         alerta_cierre_fiscal=status_alert,
