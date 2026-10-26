@@ -24,14 +24,14 @@ def load_artifacts():
         threshold = 0.5
 
 class TelemetryData(BaseModel):
-    tag_medidor: str = Field(..., example="TAG-MED-T101")
+    id_medidor: str = Field(..., example="TAG-MED-T101")
     volumen_bbl: float = Field(..., example=1203.40)
     presion_psi: float = Field(..., example=215.92)
     temperatura_c: float = Field(..., example=60.39)
     desviacion_balance_pct: float = Field(..., example=-1.57)
 
 class AnomalyResponse(BaseModel):
-    tag_medidor: str
+    id_medidor: str
     es_anomalia: bool
     probabilidad_anomalia: float
     alerta_cierre_fiscal: str
@@ -60,7 +60,7 @@ def detect_anomaly(data: TelemetryData):
     compliance = "NO CONFORME - Requiere auditoría inmediata Anexo 30/31" if is_anomaly else "CONFORME - Anexo 30/31 SAT"
     
     return AnomalyResponse(
-        tag_medidor=data.tag_medidor,
+        id_medidor.id_medidor,
         es_anomalia=is_anomaly,
         probabilidad_anomalia=round(prob, 4),
         alerta_cierre_fiscal=status_alert,
