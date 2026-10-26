@@ -28,7 +28,7 @@ class TelemetryData(BaseModel):
     volumen_bbl: float = Field(..., example=1203.40)
     presion_psi: float = Field(..., example=215.92)
     temperatura_c: float = Field(..., example=60.39)
-    desviacion_balance_pct: float = Field(..., example=-1.57)
+    delta_balance_pct: float = Field(..., example=-1.57)
 
 class AnomalyResponse(BaseModel):
     id_medidor: str
@@ -50,7 +50,7 @@ def detect_anomaly(data: TelemetryData):
         "Volumen": data.volumen_bbl,
         "Presion": data.presion_psi,
         "Temperatura": data.temperatura_c,
-        "DesviacionBalance": data.desviacion_balance_pct
+        "DesviacionBalance": data.delta_balance_pct
     }])
     
     prob = float(model.predict_proba(input_df)[0][1])
