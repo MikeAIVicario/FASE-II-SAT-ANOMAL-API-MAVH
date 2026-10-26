@@ -50,7 +50,7 @@ def detect_anomaly(data: TelemetryData):
         "Volumen": data.volumen_bbl,
         "Presion": data.presion_psi,
         "Temperatura": data.temperatura_c,
-        "DesviacionBalance": data.delta_balance_pct
+        "delta_balance_pct": data.delta_balance_pct
     }])
     
     prob = float(model.predict_proba(input_df)[0][1])
