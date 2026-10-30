@@ -147,3 +147,70 @@ Dictamen fiscal devuelto (HTTP 200):
 Nota de Latencia en Capa Gratuita: Tras 15 minutos de inactividad, la instancia de Render entra en estado de reposo (spin down).
 La primera petición enviada tras un periodo de inactividad despertará el contenedor en aproximadamente 30 a 50 segundos. Las solicitudes posteriores responderán con baja latencia.
 
+
+
+Pruebas Funcionales, Casos Extremos y Validación Operativa
+Este capítulo detalla la metodología de verificación, ejecución de pruebas de integración y evaluación de casos de borde (edge cases) para el microservicio de Detección de Anomalías Volumétricas SAT (cumplimiento Anexos 30 y 31) alojado en Render.com.
+
+El objetivo primordial del plan de pruebas es garantizar:La resiliencia del middleware de validación (Pydantic) frente a cargas de datos malformadas.La certeza del modelo de Machine Learning ante fluctuaciones térmicas, picos de presión y variaciones severas en el balance volumétrico.El cumplimiento normativo estricto al mantener una garantía de 100% Recall en la captura de desviaciones superiores al umbral permitido del $0.5\%$ por el SAT.
+
+
+Escenario 1: Operación Normal (Línea Base)
+Objetivo: Confirmar que las variables en rangos estándar no generen falsas alarmas de cierre fiscal.
+
+Payload JSON:
+
+JSON
+{
+  "id_medidor": "T101",
+  "volumen_bbl": 1198.9,
+  "presion_psi": 148.0,
+  "temperatura_c": 25.0,
+  "delta_balance_pct": 0.05
+}
+
+
+Escenario 2: Anomalía Térmica / Presión Alta (Edge Case 1)
+Objetivo: Evaluar la detección ante variaciones críticas de presión y temperatura que afectan la densidad del hidrocarburo.
+
+Payload JSON:
+
+JSON
+{
+  "id_medidor": "T101",
+  "volumen_bbl": 2096.9,
+  "presion_psi": 228.4,
+  "temperatura_c": 72.1,
+  "delta_balance_pct": -2.53
+}
+Resultado Esperado (HTTP 200):
+"es_anomalia": true, emisión de alerta de bloqueo preventivo fiscal y estatus NO CONFORME.
+
+
+
+Escenario 3: Pérdida Físicamente Imposible (Edge Case 2)
+Objetivo: Validar la captura de fugas masivas o extracciones no autorizadas donde la pérdida excede el límite del $0.5\%$.Payload JSON:JSON{
+  "id_medidor": "T101",
+  "volumen_bbl": 619.7,
+  "presion_psi": 271.1,
+  "temperatura_c": 22.4,
+  "delta_balance_pct": 3.98
+}
+Resultado Esperado (HTTP 200):
+
+"es_anomalia": true, probabilidad máxima de anomalía (1.0) y solicitud de auditoría inmediata.
+
+
+Escenario 4: Ruido Cercano al Umbral / Límite Fronterizo (Edge Case 3)
+Objetivo: Comprobar la respuesta conservadora del modelo calibrado a $100\%$ Recall ante fluctuaciones límite.Payload JSON:JSON{
+  "id_medidor": "T101",
+  "volumen_bbl": 1250.1,
+  "presion_psi": 125.2,
+  "temperatura_c": 10.4,
+  "delta_balance_pct": -1.89
+}
+Resultado Esperado (HTTP 200):
+
+"es_anomalia": true, asegurando la detención preventiva ante cualquier desvío potencial.
+
+
