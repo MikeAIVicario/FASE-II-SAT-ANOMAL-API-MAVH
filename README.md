@@ -19,13 +19,12 @@ API REST productiva desarrollada con FastAPI, Docker y Machine Learning para la 
 git clone [https://github.com/tu-usuario/fase-ii-sat-anexo-30-31-anoma-api.git](https://github.com/tu-usuario/fase-ii-sat-anexo-30-31-anoma-api.git)
 cd fase-ii-sat-anexo-30-31-anoma-api
 
-
-
 ## Estructura del Proyecto
 - `app/`: Código de la API RESTful (FastAPI).
 - `models/`: Artefactos e hiperparámetros del modelo entrenado.
 - `notebooks/`: Cuadernos de entrenamiento y validación de métricas (Recall 100%).
 - `data/`: Datasets de telemetría.
+
 FASE-II-SAT-ANOMAL-API-MAVH/
 ├── data/               # Datasets de entrenamiento y prueba
 ├── models/             # Modelos de ML serializados (.pkl, .joblib)
