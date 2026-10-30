@@ -112,3 +112,38 @@ Para comprobar el estado operativo de la instancia en la nube, envía una petici
 ```bash
 curl [https://fase-ii-sat-anomal-api-mavh.onrender.com/health](https://fase-ii-sat-anomal-api-mavh.onrender.com/health)
 
+
+Respuesta de confirmación (HTTP 200):
+{
+  "status": "ok",
+  "service": "FASE II SAT ANOMAL-API-MAVH",
+  "recall_guarantee": "100%"
+}
+
+Prueba de Inferencia y Dictamen SAT
+Para validar el pipeline de detección de anomalías en producción, envía un payload con la telemetría del medidor:
+
+curl -X POST "[https://fase-ii-sat-anomal-api-mavh.onrender.com/api/v1/detect-anomaly](https://fase-ii-sat-anomal-api-mavh.onrender.com/api/v1/detect-anomaly)" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "id_medidor": "TAG-MED-RENDER-01",
+       "volumen_bbl": 2096.92,
+       "presion_psi": 228.43,
+       "temperatura_c": 72.12,
+       "delta_balance_pct": -2.53
+     }'
+
+
+Dictamen fiscal devuelto (HTTP 200):
+{
+  "id_medidor": "TAG-MED-RENDER-01",
+  "es_anomalia": true,
+  "probabilidad_anomalia": 1.0,
+  "alerta_cierre_fiscal": "CRÍTICO: Anomalía Volumétrica Detectada. Bloqueo Preventivo Fiscal.",
+  "cumplimiento_anexo30_31": "NO CONFORME - Requiere auditoría inmediata Anexo 30/31"
+}
+
+
+Nota de Latencia en Capa Gratuita: Tras 15 minutos de inactividad, la instancia de Render entra en estado de reposo (spin down).
+La primera petición enviada tras un periodo de inactividad despertará el contenedor en aproximadamente 30 a 50 segundos. Las solicitudes posteriores responderán con baja latencia.
+
