@@ -26,3 +26,14 @@ cd fase-ii-sat-anexo-30-31-anoma-api
 - `models/`: Artefactos e hiperparámetros del modelo entrenado.
 - `notebooks/`: Cuadernos de entrenamiento y validación de métricas (Recall 100%).
 - `data/`: Datasets de telemetría.
+FASE-II-SAT-ANOMAL-API-MAVH/
+├── data/               # Datasets de entrenamiento y prueba
+├── models/             # Modelos de ML serializados (.pkl, .joblib)
+├── src/                # Scripts de preprocesamiento, análisis y entrenamiento
+├── app/                # Código fuente de la API (endpoints, esquemas)
+│   ├── main.py         # Punto de entrada de la aplicación
+│   └── schemas.py      # Definición de modelos de entrada/salida (Pydantic)
+├── tests/              # Pruebas unitarias e integración
+├── .gitignore          # Archivos excluidos de Git
+├── requirements.txt    # Lista de dependencias
+└── README.md           # Documentación principal
