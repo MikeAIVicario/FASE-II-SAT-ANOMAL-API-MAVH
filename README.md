@@ -14,7 +14,7 @@ API REST productiva desarrollada con FastAPI, Docker y Machine Learning para la 
 
 ## 🚀 Instrucciones de Inicio Rápido (Local)
 
-### 1. Clonar el Repositorio
+###  Clonar el Repositorio
 ```bash
 git clone [https://github.com/tu-usuario/fase-ii-sat-anexo-30-31-anoma-api.git](https://github.com/tu-usuario/fase-ii-sat-anexo-30-31-anoma-api.git)
 cd fase-ii-sat-anexo-30-31-anoma-api
@@ -36,3 +36,79 @@ FASE-II-SAT-ANOMAL-API-MAVH/
 ├── .gitignore          # Archivos excluidos de Git
 ├── requirements.txt    # Lista de dependencias
 └── README.md           # Documentación principal
+
+### Puesta en Operación y Validación Operativa
+
+Abre un navegador web (Google Chrome, Firefox o Edge).Ingresa a la URL oficial del entorno de producción:
+https://fase-ii-sat-anomal-api-mavh.onrender.com/docs
+
+Confirma la carga del encabezado principal: API de Detección de Anomalías Volumétricas SAT - Anexos 30 y 31 (Versión 2.0.0)
+
+Verificación de Disponibilidad del Servicio (Health Check)
+En el bloque interactivo, ubicar y hacer clic sobre la ruta HTTP GET /health.
+Hacer clic en el botón Try it out ubicado en el extremo derecho.
+Presionar el botón azul Execute.Verifica que en Server response devuelva el código HTTP 200 con la siguiente estructura JSON:
+{
+  "status": "ok",
+  "service": "FASE II SAT ANOMAL-API-MAVH",
+  "recall_guarantee": "100%"
+}
+
+Validación del Modelo de Inferencia y Dictamen SAT
+Ubicar el bloque de petición HTTP POST /api/v1/detect-anomaly.
+Hacer clic sobre la barra para desplegar sus parámetros.Presiona el botón Try it out (parte superior derecha del bloque del endpoint).
+En el campo de texto Request body, reemplaza el contenido por la siguiente telemetría de prueba con desviación volumétrica:JSON
+{
+  "id_medidor": "TAG-MED-RENDER-01",
+  "volumen_bbl": 2096.92,
+  "presion_psi": 228.43,
+  "temperatura_c": 72.12,
+  "delta_balance_pct": -2.53
+}
+
+Prueba Externa desde Terminal
+Para validar que la API acepta peticiones directas desde sistemas externos, ejecuta el siguiente comando en la terminal (Git Bash, PowerShell o Cloud Shell):
+curl -X POST "https://fase-ii-sat-anomal-api-mavh.onrender.com/api/v1/detect-anomaly" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "id_medidor": "TAG-MED-RENDER-01",
+       "volumen_bbl": 2096.92,
+       "presion_psi": 228.43,
+       "temperatura_c": 72.12,
+       "delta_balance_pct": -2.53
+     }'
+
+## 🚀 Despliegue y Puesta en Operación en la Nube (Render.com)
+
+El microservicio de detección de anomalías volumétricas (cumplimiento SAT Anexos 30 y 31) se encuentra desplegado y operativo en la nube mediante un contenedor Docker alojado en **Render.com**.
+
+### 📌 Información del Entorno de Producción
+
+* **URL Base de Producción:** `https://fase-ii-sat-anomal-api-mavh.onrender.com`
+* **Documentación Interoperable (Swagger UI):** `https://fase-ii-sat-anomal-api-mavh.onrender.com/docs`
+* **Arquitectura de Contenedores:** Docker (Python 3.11 + FastAPI + Scikit-Learn 1.6.1)
+* **Garantía de Modelo:** 100% Recall para auditoría fiscal.
+
+---
+
+### 🛠️ Paso a Paso del Proceso de Despliegue en Render
+
+1. **Configuración del Servicio Web:**
+   * Se conectó el repositorio de GitHub `MikeAIVicario/FASE-II-SAT-ANOMAL-API-MAVH` a la plataforma Render.com.
+   * Se configuró el entorno de ejecución en modo **Docker**, permitiendo a Render detectar automáticamente el `Dockerfile` del proyecto.
+   * Se asignó la rama `main` para el despliegue continuo (*Auto-Deploy*).
+
+2. **Sincronización de Cambios y CI/CD:**
+   * Cada actualización enviada a la rama `main` mediante `git push origin main` activa una tarea automática de compilación (*Build*) y despliegue (*Deploy*) en Render.
+   * Se alinearon las dependencias del contenedor y se corrigieron los esquemas Pydantic (`app/schemas.py`) para garantizar la correcta validación de entrada de variables volumétricas.
+
+---
+
+### 🧪 Verificación Operativa y Pruebas de Integración
+
+#### 1. Verificación de Disponibilidad (Health Check)
+Para comprobar el estado operativo de la instancia en la nube, envía una petición GET a la ruta `/health`:
+
+```bash
+curl [https://fase-ii-sat-anomal-api-mavh.onrender.com/health](https://fase-ii-sat-anomal-api-mavh.onrender.com/health)
+
