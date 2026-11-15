@@ -1,0 +1,67 @@
+{
+  "title": "SAT Anexos 30 y 31 - Observabilidad Volumétrica MLOps",
+  "timezone": "browser",
+  "refresh": "5s",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Total de Lecturas Evaluadas (Conformes vs Anomalías)",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum(sat_volumetric_predictions_total) by (es_anomalia)",
+          "legendFormat": "Anomalía: {{es_anomalia}}"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Latencia de Inferencia p99 (SLO < 0.15s)",
+      "type": "timeseries",
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 0 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(sat_volumetric_inference_duration_seconds_bucket[5m])) by (le))",
+          "legendFormat": "Latencia p99 (s)"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Tasa de Anomalías Detectadas (%)",
+      "type": "gauge",
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum(sat_volumetric_predictions_total{es_anomalia=\"true\"}) / clamp_min(sum(sat_volumetric_predictions_total), 1) * 100",
+          "legendFormat": "% Anomalías"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Desviación de Balance Volumétrico (%) por Medidor",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+      "targets": [
+        {
+          "expr": "sat_volumetric_last_deviation_balance_pct",
+          "legendFormat": "{{id_medidor}}"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Predicciones Acumuladas por Medidor y Estado Fiscal",
+      "type": "barchart",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+      "targets": [
+        {
+          "expr": "sum(sat_volumetric_predictions_total) by (id_medidor, es_anomalia)",
+          "legendFormat": "{{id_medidor}} (Anomalía={{es_anomalia}})"
+        }
+      ]
+    }
+  ]
+}
