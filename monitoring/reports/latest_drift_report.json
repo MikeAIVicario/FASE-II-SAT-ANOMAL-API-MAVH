@@ -1,0 +1,34 @@
+{
+  "timestamp_utc": "2026-11-15T20:00:30.301906+00:00",
+  "baseline_rows": 1000,
+  "current_rows": 300,
+  "features": {
+    "Volumen": {
+      "psi": 4.508935,
+      "ks_statistic": 0.827667,
+      "ks_pvalue": 0.0,
+      "status": "CRITICAL_DRIFT"
+    },
+    "Presion": {
+      "psi": 0.04278,
+      "ks_statistic": 0.097,
+      "ks_pvalue": 0.024349,
+      "status": "STABLE"
+    },
+    "Temperatura": {
+      "psi": 0.024377,
+      "ks_statistic": 0.025,
+      "ks_pvalue": 0.998088,
+      "status": "STABLE"
+    },
+    "DesviacionBalance": {
+      "psi": 6.754851,
+      "ks_statistic": 0.922333,
+      "ks_pvalue": 0.0,
+      "status": "CRITICAL_DRIFT"
+    }
+  },
+  "severe_drift_count": 2,
+  "moderate_drift_count": 0,
+  "action_required": "TRIGGER_RETRAINING_PIPELINE"
+}
