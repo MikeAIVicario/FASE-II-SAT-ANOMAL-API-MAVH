@@ -214,3 +214,65 @@ Resultado Esperado (HTTP 200):
 "es_anomalia": true, asegurando la detención preventiva ante cualquier desvío potencial.
 
 
+
+
+---
+
+## 📊 Monitorización, Observabilidad y Gobernanza Operativa (MLOps)
+
+El microservicio implementa una arquitectura de **observabilidad moderna** basada en los tres pilares (Métricas, Logs y Trazas), alineada con el cumplimiento regulatorio de los **Anexos 30 y 31 del SAT** (controles volumétricos de hidrocarburos) y la garantía operativa de **Recall 100%**.
+
+### 1. Arquitectura de Telemetría (`app/observability.py`)
+
+* **Métricas en Tiempo Real (Prometheus - `GET /metrics`):**
+  * `sat_volumetric_inference_duration_seconds`: Histograma de latencia de inferencia por versión de modelo e `id_medidor`.
+  * `sat_volumetric_predictions_total`: Contador de evaluaciones segmentado por resultado (`es_anomalia`) y medidor.
+  * `sat_volumetric_anomaly_probability_distribution`: Distribución continua de probabilidades emitidas por el clasificador.
+  * `sat_volumetric_last_deviation_balance_pct`: Medidor instantáneo (*Gauge*) del porcentaje de desviación de balance por tanque/medidor.
+  * `sat_volumetric_active_model_info`: Inventario en memoria del artefacto cargado, umbral (`threshold`) y `mlflow_run_id`.
+* **Trazas Distribuidas (OpenTelemetry):**
+  * Instrumentación automática de rutas FastAPI y *spans* granulares para `telemetry.feature.preparation` y `model.inference.predict`, exportables vía protocolo OTLP hacia **Jaeger** o **Grafana Tempo** mediante `OTEL_EXPORTER_OTLP_ENDPOINT`.
+* **Logs Estructurados de Auditoría (JSON):**
+  * Cada petición emite un registro JSON correlacionado mediante `trace_id` con el resumen de variables físicas (`volumen_bbl`, `presion_psi`, `temperatura_c`, `desviacion_balance_pct`) y el dictamen fiscal (`CONFORME` / `NO CONFORME`).
+
+### 2. SLOs, Presupuestos de Error y Alertas Inteligentes (`monitoring/prometheus_alerts.yml`)
+
+| Indicador (SLI) | Objetivo (SLO) | Error Budget (30 días) | Regla de Alerta Asociada | Severidad |
+| :--- | :--- | :--- | :--- | :--- |
+| **Disponibilidad del Servicio** | **99.9%** | **0.1%** (~43.2 min) | `SATVolumetricAPIServiceDown` / `SATVolumetricHighErrorBurnRateP1` (Burn Rate >= 14.4x) | **P1** (Crítica) |
+| **Latencia de Inferencia** | **p99 < 150 ms** | **1.0%** de peticiones lentas | `SATVolumetricHighLatencyP99` (sostenida > 10 min) | **P2** (Alta) |
+| **Cumplimiento Volumétrico** | **Desviación <= ±2.0%** | **0.0%** (Tolerancia cero fiscal) | `SATVolumetricBalanceDeviationExceeded` | **P1** (Crítica) |
+| **Estabilidad de Predicciones** | **Tasa anomalías <= 15%** | **1.5%** ventanas horarias | `SATVolumetricAnomalySpike` | **P2** (Alta) |
+
+El enrutamiento de notificaciones se gestiona en `monitoring/alertmanager.yml` mediante variables de entorno (`${PAGERDUTY_WEBHOOK_URL}` y `${SLACK_WEBHOOK_URL}`).
+
+### 3. Dashboards Operativos
+
+La visualización en tiempo real se estructura en tres vistas operativas (Grafana + MLflow):
+1. **Salud del Servicio y SLOs:** Consumo en tiempo real del *Error Budget*, *Burn Rate* horario y percentiles de latencia (p50, p95, p99).
+2. **Observabilidad del Modelo ML:** Evolución de la tasa de anomalías detectadas, histograma de probabilidades frente a la línea base de entrenamiento y versión activa (`@champion`).
+3. **Telemetría Física por Medidor:** Series temporales de `DesviacionBalance` y conteo de bloqueos preventivos fiscales por `id_medidor`.
+
+### 4. Detección de Data Drift y Respuesta Automatizada (`monitoring/drift_detector.py`)
+
+El pipeline de monitoreo evalúa periódicamente la deriva estadística sobre las cuatro variables físicas críticas (`Volumen`, `Presion`, `Temperatura`, `DesviacionBalance`) registrando métricas y artefactos (`monitoring/reports/latest_drift_report.json`) en **MLflow** (`sqlite:///mlflow.db`):
+
+* **Population Stability Index (PSI):**
+  * `PSI < 0.10`: Distribución estable (`STABLE`).
+  * `0.10 <= PSI < 0.20` o `p-value K-S < 0.01`: Deriva moderada (`ALERT_P3_INVESTIGATE`).
+  * `PSI >= 0.20` en 2 o más variables: Deriva severa (`TRIGGER_RETRAINING_PIPELINE`).
+* **Flujos de Auto-Remediation:**
+  * **Rollback en Caliente (`POST /admin/reload-model`):** Permite revertir el modelo en memoria a una versión estable previa sin reiniciar el contenedor ni perder disponibilidad.
+  * **Reentrenamiento Continuo (CT):** Disparado automáticamente cuando `action_required == "TRIGGER_RETRAINING_PIPELINE"`, validando que el modelo candidato mantenga **Recall 100%** antes de su promoción.
+
+### 5. Runbooks de Respuesta a Incidentes
+
+#### <a id="runbook-01"></a>Runbook 01: Degradación de Latencia (p99 > 150 ms) o Burn Rate P1
+1. **Diagnóstico:** Consultar trazas en Jaeger/Tempo filtrando por `duration > 150ms` para aislar si el cuello de botella ocurre en `telemetry.feature.preparation` o en `model.inference.predict`. Revisar saturación de CPU/RAM.
+2. **Mitigación:** Escalar horizontalmente las réplicas del contenedor de la API (`docker compose up -d --scale api=3` o `kubectl scale`) y verificar tamaño de lote de peticiones entrantes.
+
+#### <a id="runbook-02"></a>Runbook 02: Alerta de Desviación Volumétrica (> 2%) o Pico de Anomalías (> 15%)
+1. **Diagnóstico:** Inspeccionar los logs JSON filtrando por `level: "WARNING"` e `id_medidor`. Ejecutar `python monitoring/drift_detector.py` para verificar si existe descalibración física en los sensores de presión/temperatura o un cambio brusco de distribución.
+2. **Mitigación:**
+   * Si es **desviación física confirmada**: Mantener el bloqueo preventivo fiscal del medidor afectado y notificar al área de Metrología/Auditoría Anexo 30 y 31.
+   * Si es **corrupción en la ingesta de telemetría**: Activar protocolo de validación manual y revertir a la última versión estable del modelo mediante `POST /admin/reload-model`.
