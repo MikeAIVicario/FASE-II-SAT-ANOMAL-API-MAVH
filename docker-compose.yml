@@ -1,0 +1,44 @@
+services:
+  api:
+    build: .
+    container_name: sat-anomal-api
+    ports:
+      - "8000:8000"
+    environment:
+      - MODEL_PATH=models/sat_anomaly_model.joblib
+      - MLFLOW_TRACKING_URI=sqlite:///mlflow.db
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
+    volumes:
+      - ./models:/app/models
+      - ./mlflow.db:/app/mlflow.db
+    depends_on:
+      - jaeger
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: sat-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./monitoring/prometheus_alerts.yml:/etc/prometheus/prometheus_alerts.yml
+    depends_on:
+      - api
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: sat-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: sat-jaeger
+    ports:
+      - "16686:16686"
+      - "4317:4317"
