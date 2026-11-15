@@ -3,3 +3,13 @@ __pycache__/
 .ipynb_checkpoints/
 .env
 data/*.csv
+
+mlflow.db
+mlruns/
+
+__pycache__/
+*.py[cod]
+mlruns/
+mlflow.db
+.ipynb_checkpoints/
+venv/

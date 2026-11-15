@@ -1,0 +1,81 @@
+groups:
+  - name: sat_volumetric_slo_and_compliance_alerts
+    rules:
+      # -----------------------------------------------------------------------
+      # 1. SLO DISPONIBILIDAD (99.9% -> Error Budget 0.1% en 30 días)
+      # -----------------------------------------------------------------------
+      - alert: SATVolumetricAPIServiceDown
+        expr: up{job="sat-volumetric-anomal-api"} == 0
+        for: 1m
+        labels:
+          severity: P1
+          service: sat-anomal-api
+          anexo: "30-31"
+        annotations:
+          summary: "Caída total del microservicio de telemetría SAT"
+          description: "El endpoint de inferencia volumétrica no responde desde hace más de 1 minuto."
+          runbook_url: "https://github.com/MikeAIVicario/FASE-II-SAT-ANOMAL-API-MAVH#runbook-01"
+
+      - alert: SATVolumetricHighErrorBurnRateP1
+        expr: |
+          (
+            sum(rate(http_requests_total{job="sat-volumetric-anomal-api",status=~"5.."}[1h]))
+            /
+            sum(rate(http_requests_total{job="sat-volumetric-anomal-api"}[1h]))
+          ) > (14.4 * 0.001)
+        for: 5m
+        labels:
+          severity: P1
+          slo: availability
+        annotations:
+          summary: "Burn Rate Crítico (14.4x) consumiendo Error Budget de disponibilidad"
+          description: "La tasa de errores 5xx agotará el presupuesto mensual de error en menos de 2 días."
+          runbook_url: "https://github.com/MikeAIVicario/FASE-II-SAT-ANOMAL-API-MAVH#runbook-01"
+
+      # -----------------------------------------------------------------------
+      # 2. SLO LATENCIA (p99 < 150 ms)
+      # -----------------------------------------------------------------------
+      - alert: SATVolumetricHighLatencyP99
+        expr: |
+          histogram_quantile(
+            0.99,
+            sum(rate(sat_volumetric_inference_duration_seconds_bucket[5m])) by (le)
+          ) > 0.150
+        for: 10m
+        labels:
+          severity: P2
+          slo: latency
+        annotations:
+          summary: "Latencia de inferencia p99 superior a 150 ms"
+          description: "El percentil 99 de inferencia superó el umbral SLO de 150 ms durante 10 minutos."
+          runbook_url: "https://github.com/MikeAIVicario/FASE-II-SAT-ANOMAL-API-MAVH#runbook-01"
+
+      # -----------------------------------------------------------------------
+      # 3. CUMPLIMIENTO FISCAL ANEXOS 30 Y 31 (Anomalías y Desviación Balance)
+      # -----------------------------------------------------------------------
+      - alert: SATVolumetricBalanceDeviationExceeded
+        expr: abs(sat_volumetric_last_deviation_balance_pct) > 2.0
+        for: 2m
+        labels:
+          severity: P1
+          compliance: "Anexo-30-31-SAT"
+        annotations:
+          summary: "Desviación de balance volumétrico fuera de norma (> 2%) en {{ $labels.id_medidor }}"
+          description: "El medidor {{ $labels.id_medidor }} reporta una desviación de {{ $value }}%, activando bloqueo preventivo fiscal."
+          runbook_url: "https://github.com/MikeAIVicario/FASE-II-SAT-ANOMAL-API-MAVH#runbook-02"
+
+      - alert: SATVolumetricAnomalySpike
+        expr: |
+          (
+            sum(rate(sat_volumetric_predictions_total{es_anomalia="true"}[15m]))
+            /
+            clamp_min(sum(rate(sat_volumetric_predictions_total[15m])), 0.001)
+          ) > 0.15
+        for: 10m
+        labels:
+          severity: P2
+          ml_health: prediction_drift
+        annotations:
+          summary: "Tasa anormalmente alta de anomalías detectadas (> 15%)"
+          description: "Más del 15% de las lecturas están siendo clasificadas como anómalas. Revisar calibración de sensores o data drift."
+          runbook_url: "https://github.com/MikeAIVicario/FASE-II-SAT-ANOMAL-API-MAVH#runbook-02"
